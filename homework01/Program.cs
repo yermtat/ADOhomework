@@ -61,20 +61,20 @@ Console.WriteLine($"Salary less than 1000: {count}");*/
 //}
 
 
-command = new("delete from Subjects where Name='History of art'", conn);
-command.ExecuteNonQuery();
+//command = new("delete from Subjects where Name='History of art'", conn);
+//command.ExecuteNonQuery();
 
-command = new("select * from Subjects", conn);
-{
+//command = new("select * from Subjects", conn);
+//{
 
-    using SqlDataReader reader = command.ExecuteReader();
+//    using SqlDataReader reader = command.ExecuteReader();
 
-    while (reader.Read())
-    {
-        Console.WriteLine($"{reader[0]}\t{reader[1]}");
+//    while (reader.Read())
+//    {
+//        Console.WriteLine($"{reader[0]}\t{reader[1]}");
 
-    }
-    Console.WriteLine();
-}
+//    }
+//    Console.WriteLine();
+//}
 
 
