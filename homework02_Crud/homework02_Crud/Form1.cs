@@ -2,22 +2,20 @@ using Microsoft.Extensions.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.DirectoryServices.ActiveDirectory;
+using System.Windows.Forms;
 
 namespace homework02_Crud
 {
     public partial class Form1 : Form
     {
-        SqlConnection conn;
-        SqlDataAdapter adapter = new();
+        private SqlConnection conn;
+        private SqlDataAdapter adapter = new();
 
-        DataTable tb = new DataTable();
+        private DataTable tb;
         public Form1()
         {
             InitializeComponent();
-        }
 
-        private void Form1_Load(object sender, EventArgs e)
-        {
             var builder = new ConfigurationBuilder();
             builder.AddJsonFile("appSettings.json");
             var config = builder.Build();
@@ -25,68 +23,49 @@ namespace homework02_Crud
             var connString = config.GetConnectionString("Default");
             conn = new SqlConnection(connString);
             conn.Open();
+        }
 
-            DataTable.DataSource = tb;
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+            using SqlCommand cmd = new("select [name] from sys.tables", conn);
+            using SqlDataReader reader = cmd.ExecuteReader();
+
+
+            while (reader.Read())
+            {
+                DataTablesBox.Items.Add(reader["name"]);
+            }
+
         }
 
         private void ReadButton_Click(object sender, EventArgs e)
         {
-            tb.Clear();
-            adapter.SelectCommand = new("select * from Teachers", conn);
+            tb = new DataTable();
+            if (DataTablesBox.SelectedItem != null)
+            {
+            adapter.SelectCommand = new($"select * from { DataTablesBox.SelectedItem.ToString() }", conn);
             adapter.Fill(tb);
-        }
-
-        private void CreateButton_Click(object sender, EventArgs e)
-        {
-            var parameters = new[]
-            {
-                new SqlParameter("@Name", NameTextBox.Text),
-                new SqlParameter("@Surname", SurnameTextBox.Text),
-                new SqlParameter("@Salary", SalaryTextBox.Text)
-            };
-
-            adapter.InsertCommand = new($"insert into Teachers(Name, Salary, Surname) values(@Name, @Salary, @Surname)", conn);
-            adapter.InsertCommand.Parameters.AddRange(parameters);
-
-            try
-            {
-                adapter.InsertCommand.ExecuteNonQuery();
             }
-            catch
-            {
-                MessageBox.Show("Wrong data, try again", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+
+            DataTable.DataSource = tb;
         }
 
         private void UpdateButton_Click(object sender, EventArgs e)
         {
-            var parameters = new[]
-{
-                new SqlParameter("@Name", NameTextBox.Text),
-                new SqlParameter("@Surname", SurnameTextBox.Text),
-                new SqlParameter("@Salary", SalaryTextBox.Text)
-            };
-
-
-            adapter.UpdateCommand = new($"update Teachers set Name = @Name, Surname = @Surname, Salary = @Salary where Id = {DataTable.SelectedRows[0].Cells[0].Value};", conn);
-            adapter.UpdateCommand.Parameters.AddRange(parameters);
-
-            try
-            {
-                adapter.UpdateCommand.ExecuteNonQuery();
-            }
-            catch
-            {
-                MessageBox.Show("Wrong data, try again", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-
+            using SqlCommandBuilder builder = new(adapter);
+            DataTable table = (DataTable)DataTable.DataSource;
+            adapter.Update(table);
         }
 
         private void DeleteButton_Click(object sender, EventArgs e)
         {
-            adapter.DeleteCommand = new($"delete from Teachers where Id = {DataTable.SelectedRows[0].Cells[0].Value};", conn);
-
-            adapter.DeleteCommand.ExecuteNonQuery();
+            for (int i = 0; i < DataTable.SelectedRows.Count; i++)
+            {
+                adapter.DeleteCommand = new($"delete from {DataTablesBox.SelectedItem.ToString()} where Id = {DataTable.SelectedRows[i].Cells[0].Value};", conn);
+                adapter.DeleteCommand.ExecuteNonQuery();
+                ReadButton.PerformClick();
+            }
         }
     }
 }
